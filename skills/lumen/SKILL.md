@@ -441,28 +441,36 @@ Show the health and coverage of the documentation.
 
 ## Command: `/lumen rules`
 
-Generate rule files that force AI agents to load project documentation before acting.
+Generate rule files that tell AI agents to read project documentation before acting.
+Supports Cursor, Claude Code, and Codex.
 
-Read `references/agents-template.md` for the rule file content.
+Read `references/agents-template.md` for tool-specific formats and the full procedure.
 
 ### Procedure
 
-1. **Check existing files**:
-   - If neither `AGENTS.md` nor `CLAUDE.md` exists → create `AGENTS.md`, symlink `CLAUDE.md → AGENTS.md`
-   - If `CLAUDE.md` exists (not a symlink) → rename to `AGENTS.md`, symlink `CLAUDE.md → AGENTS.md`, preserve original content
-   - If `CLAUDE.md` is already a symlink → check where it points, update if needed
-   - If `AGENTS.md` exists → append Lumen section if not already present
-   - Always ensure `CLAUDE.md` symlink points to `AGENTS.md`
+1. **Run the install script** to copy rule files:
+   ```bash
+   bash skills/lumen/scripts/install-rules.sh .
+   ```
+   This creates:
+   - `.cursor/rules/lumen.mdc` — Cursor rule (MDC format, alwaysApply)
+   - `.claude/rules/lumen.md` — Claude Code rule (plain markdown, unconditional)
+   - `CLAUDE.md` → `AGENTS.md` symlink (only if AGENTS.md exists and CLAUDE.md doesn't)
 
-2. **Write Lumen section** into `AGENTS.md` (append, don't overwrite existing content).
-   Use the AGENTS.md template from `references/templates.md` as the base content for
-   the project overview and doc index. The Lumen section from `references/agents-template.md`
-   adds the "read docs before acting" instructions.
+   The rule content comes from `assets/lumen-rule.md` — a single source of truth.
+   The script only copies files. It doesn't touch AGENTS.md content.
 
-3. **Generate Cursor rules**: create `.cursor/rules/agents/lumen.md` with Cursor-format
-   equivalent.
+2. **Update AGENTS.md** (agent's responsibility, not the script's):
+   - If `AGENTS.md` doesn't exist → create it using the template from
+     `references/templates.md`, then append the Lumen section from
+     `references/agents-template.md`.
+   - If it exists without a Lumen section → append.
+   - If it exists with a Lumen section → update in place.
+   - If `CLAUDE.md` exists as a regular file → migrate its content into
+     `AGENTS.md`, then replace with symlink.
+   - Codex reads `AGENTS.md` directly — no separate rule file needed.
 
-4. **Report**: confirm what was created/modified.
+3. **Report**: confirm what was created/modified.
 
 ---
 
@@ -538,4 +546,6 @@ When docs already exist:
 - Scan checklists → `references/scan-guide.md` *(read during /lumen scan)*
 - Parallel orchestration → `references/scan-parallel.md` *(read during /lumen scan)*
 - Ingest processing rules → `references/ingest-guide.md` *(read during /lumen ingest)*
-- Rule file templates → `references/agents-template.md` *(read during /lumen rules)*
+- Rule file guide → `references/agents-template.md` *(read during /lumen rules)*
+- Rule content → `assets/lumen-rule.md` *(static file, copied by install script)*
+- Install script → `scripts/install-rules.sh` *(run during /lumen rules)*
