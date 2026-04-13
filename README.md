@@ -47,7 +47,10 @@ It produces three things:
 
 ## Document Structure
 
-Lumen generates a standard `docs/` hierarchy tailored to the project size. Three options are offered during init:
+Lumen generates a `docs/` hierarchy tailored to the project's nature. Instead of
+fixed options (small/medium/large), Lumen builds a **project fingerprint** that
+captures the project type, complexity signals, and maturity — then derives a
+documentation strategy specific to that project.
 
 ```
 AGENTS.md                       # Entry point — project overview + doc index
@@ -59,19 +62,23 @@ docs/
 │   └── data-model.md           # Data model (if applicable)
 ├── api.md                      # Global API reference
 ├── data-model.md               # Database schema, entities, migrations
+├── integrations.md             # External services and third-party dependencies
 ├── codestyle.md                # Naming, patterns, idioms
 ├── rationale.md                # Non-obvious decisions with reasoning (ADR format)
 ├── deployment.md               # Build, deploy, CI/CD, monitoring
 └── raw_data/                   # Local inbox for /lumen ingest
 ```
 
+Each component also gets a **scan depth** assignment (Deep, Standard, or Light)
+based on its role and complexity, so documentation effort goes where it matters most.
+
 ## Parallel Scan
 
 For repos with multiple components, `/lumen scan` uses a three-phase orchestration model with parallel subagents:
 
-1. **Plan & Global Scan** — the main agent detects components, writes global docs
-2. **Parallel Discovery** — one subagent per component, writing concurrently to isolated paths
-3. **Synthesize** — the main agent cross-references, links, and reports results
+1. **Fingerprint, Plan & Global Scan** — the main agent builds/loads the project fingerprint, assigns scan depths, writes global docs
+2. **Parallel Discovery** — one subagent per component with depth-specific prompts (Deep/Standard/Light), writing concurrently to isolated paths
+3. **Synthesize** — the main agent cross-references, validates quality, consolidates integrations, and reports results
 
 Batching is adaptive: up to 5 components launch at once, larger repos batch in groups of 5.
 
@@ -95,9 +102,10 @@ Then invoke with any `/lumen` command.
 skills/lumen/
 ├── SKILL.md                        # Main skill definition
 └── references/
+    ├── project-fingerprint.md      # Project profiling and documentation strategy
     ├── templates.md                # Document templates (AGENTS.md, HLD, component, API, etc.)
     ├── scan-guide.md               # What to scan, what to document, what to skip
-    ├── scan-parallel.md            # Parallel orchestration model and agent prompts
+    ├── scan-parallel.md            # Parallel orchestration model and depth-specific agent prompts
     ├── ingest-guide.md             # Processing rules for raw data ingestion
     ├── init-template.md            # Init directory structure and stub contents
     └── agents-template.md          # Rule file templates for Claude Code / Cursor

@@ -12,26 +12,38 @@ add a separator and append at the end.
 ```markdown
 ## Lumen — Project Documentation
 
-This project maintains structured documentation in `docs/`.
+This project's documentation was generated and is maintained by **Lumen**, a skill
+that acts as the persistent knowledge keeper for this repository.
 
-**Before starting any task:**
+**Skill location:** `skills/lumen/` (or `.claude/skills/lumen/` depending on setup)
+**Skill trigger:** any `/lumen` command, or mentions of "lumen", "knowledge base",
+"document the project", or broad architectural questions.
+
+### Before starting any task
 
 1. Read `AGENTS.md` for the project overview, tech stack, and documentation index.
 2. Read `docs/high-level-design.md` for architecture and component map.
 3. For component-specific work, read `docs/<component-name>/README.md`.
 4. Check `docs/codestyle.md` for project patterns and code style.
 5. Check `docs/rationale.md` for non-obvious decisions and their reasoning.
+6. If the project has external integrations, check `docs/integrations.md`.
 
-**To maintain the documentation:**
+### Keeping documentation current
+
+This documentation is not static — use Lumen to keep it in sync with the code.
 
 | Command | Purpose |
 |---------|---------|
 | `/lumen scan` | Analyze code and update documentation |
+| `/lumen update` | Quick sync from recent commits |
 | `/lumen ingest` | Process raw files in docs/raw_data/ |
-| `/lumen update` | Sync with recent commits |
 | `/lumen status` | Check coverage and freshness |
 | `/lumen rules` | Regenerate these rule files |
 | `/lumen <question>` | Query the documentation |
+
+If you notice documentation is stale or incomplete, run `/lumen update` or
+`/lumen scan` rather than editing docs manually — Lumen preserves manual edits
+while keeping everything consistent.
 ```
 
 ---
@@ -49,7 +61,8 @@ alwaysApply: true
 
 # Lumen — Project Documentation
 
-This project maintains structured documentation in `docs/`.
+This project's documentation was generated and is maintained by **Lumen**, a skill
+located at `skills/lumen/`. Trigger it with any `/lumen` command.
 
 ## Before any task
 
@@ -58,14 +71,17 @@ This project maintains structured documentation in `docs/`.
 3. For component-specific work, read `docs/<component-name>/README.md`.
 4. Check `docs/codestyle.md` for coding patterns.
 5. Check `docs/rationale.md` for non-obvious decisions.
+6. If external integrations exist, check `docs/integrations.md`.
 
-## Documentation maintenance
+## Keeping documentation current
 
-Use these commands to keep documentation current:
-- `/lumen scan` — analyze code and update docs
+Use Lumen commands to maintain docs — don't edit them manually unless adding
+context that code analysis can't provide.
+
+- `/lumen scan` — full analysis and doc update
+- `/lumen update` — quick sync from recent commits
 - `/lumen ingest` — process raw files in docs/raw_data/
-- `/lumen update` — sync with recent commits
-- `/lumen status` — check coverage
+- `/lumen status` — check coverage and freshness
 ```
 
 ---

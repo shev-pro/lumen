@@ -34,7 +34,10 @@ never duplicate it. If a section would just restate the code, link to the file i
 
 ## Global scan checklist
 
-### high-level-design.md
+The project fingerprint determines which of these global docs to write. Don't write
+docs that weren't selected by the documentation strategy — they'd be empty filler.
+
+### high-level-design.md (always)
 
 Examine these sources:
 - Project root: README, docker-compose, Makefile, build scripts
@@ -96,6 +99,29 @@ Only if the project has a unified API surface. Document using the API Template:
 - **Endpoints**: method, path, request/response, errors, implementation pointer
 - **Common Error Format**: standard error shape
 
+### integrations.md
+
+Only if the project fingerprint shows integration density > 3. This doc catalogs
+every external service the system depends on — the kind of knowledge that's
+scattered across code and tribal memory.
+
+Examine these sources:
+- SDK imports and client instantiations
+- Environment variables referencing external services
+- HTTP client calls to third-party APIs
+- Message broker configurations (producers and consumers)
+- Cloud service SDK usage (AWS, GCP, Azure)
+- OAuth/auth provider configurations
+
+Document using the Integrations Template from `references/templates.md`:
+- **Service catalog**: table of all external services with purpose and owner component
+- **Per-service details**: auth method, base URL/endpoint, rate limits, error handling,
+  fallback behavior, which components use it
+- **Dependency diagram**: Mermaid diagram showing the system and its external dependencies
+
+This doc is especially valuable because external integrations are where outages happen
+and where onboarding developers get lost.
+
 ### rationale.md
 
 Start with an empty template. This gets populated incrementally through:
@@ -107,9 +133,15 @@ Start with an empty template. This gets populated incrementally through:
 
 ## Component scan checklist
 
-For each component in `docs/<component-name>/`:
+The scan depth assigned to each component (Deep, Standard, or Light) determines
+how much to document. See `references/project-fingerprint.md` § "Scan Depth Assignment"
+for how depths are assigned.
 
-### README.md
+### Deep Scan — Full checklist
+
+For each Deep component in `docs/<component-name>/`:
+
+#### README.md
 
 Use the Component README Template from `references/templates.md`.
 
@@ -124,7 +156,7 @@ Use the Component README Template from `references/templates.md`.
 4. **Key Interfaces / Types**: main interfaces, structs, types that define the contract.
    Point to source with line numbers.
 
-5. **Flows**: Mermaid `sequenceDiagram` for primary flows.
+5. **Flows**: Mermaid `sequenceDiagram` for at least 2 primary flows.
 
 6. **Configuration**: relevant env vars or config with defaults.
 
@@ -135,13 +167,49 @@ Use the Component README Template from `references/templates.md`.
 
 9. **Related Documents**: links to HLD and related components.
 
-### api.md (component-specific, if applicable)
-
+#### api.md (if applicable)
 Only if the component exposes an API. Use the API Template.
 
-### data-model.md (component-specific, if applicable)
-
+#### data-model.md (if applicable)
 Only if the component has its own data model. Use the Data Model Template.
+
+#### Rationale Discovery
+Actively look for unusual patterns. Flag them with hypotheses for the main agent
+to present to the user.
+
+### Standard Scan — Focused checklist
+
+For each Standard component in `docs/<component-name>/`:
+
+#### README.md
+
+1. **Responsibility**: what this component owns. One paragraph.
+2. **Architecture**: Mermaid diagram showing structure and dependencies.
+3. **Key Files**: the 3–5 most important files with file:function() pointers.
+4. **Primary Flow**: one Mermaid `sequenceDiagram` for the most important flow.
+5. **Dependencies**: internal and external, with nature noted.
+6. **Configuration**: env vars or config (if any).
+7. **Related Documents**: links to HLD and related components.
+
+#### api.md
+Only if the component exposes a significant API surface. Skip for internal-only.
+
+No data-model.md, no rationale discovery. Keep it focused.
+
+### Light Scan — Minimal checklist
+
+For each Light component in `docs/<component-name>/`:
+
+#### README.md only
+
+3–5 lines total:
+- What it wraps or does (one sentence)
+- Why it exists as a separate component (one sentence)
+- Pointer to main source file(s)
+- Key dependency (if any)
+
+No diagrams, no flows, no separate docs. If there's genuinely nothing interesting,
+say so: "Thin wrapper around X, see `<file>` for implementation."
 
 ---
 

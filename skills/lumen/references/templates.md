@@ -64,9 +64,15 @@ and `/lumen rules`.
 
 | Field | Value |
 |-------|-------|
+| **Managed by** | [Lumen](skills/lumen/) — project knowledge keeper skill |
+| **Project type** | <type(s) from fingerprint> |
+| **Domain complexity** | <Low / Medium / High> |
+| **Integration density** | <count> |
+| **Scan depths** | <Deep: list, Standard: list, Light: list> |
+| **Fingerprint status** | <active / provisional> |
 | **Last scan** | <YYYY-MM-DD> |
 | **Last update commit** | <short SHA> |
-| **Lumen version** | 1.0 |
+| **Lumen version** | 2.0 |
 ```
 
 ---
@@ -388,6 +394,64 @@ practices, with reasoning.
 ### <Another Decision>
 
 ...
+```
+
+---
+
+## Integrations Template
+
+```markdown
+# External Integrations
+
+<1 sentence: what external services this system depends on and why they matter.>
+
+## Service Catalog
+
+| Service | Purpose | Used by | Auth method |
+|---------|---------|---------|-------------|
+| Stripe | Payment processing | billing, checkout | API key (secret) |
+| SendGrid | Transactional email | notifications | API key |
+| Auth0 | User authentication | auth, api-gateway | OAuth2 / JWKS |
+| S3 | File storage | uploads, reports | IAM role |
+| Redis | Caching + job queue | api-gateway, worker | Connection string |
+
+## Dependency Map
+
+```mermaid
+graph TD
+    SYS[Our System] --> STRIPE[Stripe]
+    SYS --> SG[SendGrid]
+    SYS --> AUTH0[Auth0]
+    SYS --> S3[AWS S3]
+    SYS --> REDIS[Redis]
+```
+
+## Per-Service Details
+
+### Stripe
+
+- **Purpose:** Payment processing — charges, subscriptions, refunds
+- **Used by:** `billing` component → `src/billing/stripe_client.go`
+- **Base URL:** `https://api.stripe.com/v1`
+- **Auth:** API key via `STRIPE_SECRET_KEY` env var
+- **Rate limits:** 100 req/s (live mode)
+- **Error handling:** Retries with exponential backoff → `src/billing/retry.go`
+- **Fallback:** Queues failed charges for manual review
+- **Webhook:** `POST /webhooks/stripe` → `src/billing/webhook_handler.go`
+
+### <Next Service>
+
+<Repeat pattern for each service.>
+
+## Environment Variables
+
+| Variable | Service | Required | Default |
+|----------|---------|----------|---------|
+| `STRIPE_SECRET_KEY` | Stripe | yes | — |
+| `SENDGRID_API_KEY` | SendGrid | yes | — |
+| `AUTH0_DOMAIN` | Auth0 | yes | — |
+| `AWS_S3_BUCKET` | S3 | yes | — |
+| `REDIS_URL` | Redis | yes | `localhost:6379` |
 ```
 
 ---

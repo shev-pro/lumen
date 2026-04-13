@@ -7,9 +7,17 @@ Rules for processing files in `docs/raw_data/` during `/lumen ingest`.
 ## General principles
 
 - Extract **actionable knowledge only** — skip pleasantries, small talk, logistical noise.
-- Always attribute the source: add a `> Source: <filename>` line at the end of any
-  appended section.
-- Never duplicate: before appending, check if the knowledge already exists in the target file.
+- **Absorb, don't reference.** Raw files live in `raw_data/` which is gitignored —
+  they won't exist for anyone else reading the docs. The knowledge must be fully
+  integrated into the target document as if it had always been there. Never add
+  `> Source: raw_data/...` links or any reference to raw file paths.
+- **Integrate first, summarize as fallback.** The preferred outcome is that extracted
+  knowledge merges seamlessly into existing doc sections — updating a component's
+  dependencies, adding a rationale entry, enriching a flow description. If the
+  knowledge doesn't fit cleanly into any existing section (e.g., decisions not yet
+  implemented, future plans, exploratory ideas), create a summary section in the
+  most relevant doc rather than dropping the information.
+- Never duplicate: before adding, check if the knowledge already exists in the target file.
 - When in doubt about where to route something, ask the user.
 - Preserve the original raw file — never delete or modify it.
 - Use code references (`file:function()`) when the ingested content references specific code.
@@ -76,8 +84,8 @@ PDFs, specs, RFCs, external API docs, requirements docs, design docs.
 - Data model specs → route to `docs/data-model.md` or `docs/<component>/data-model.md`
 
 **For large documents**: summarize the key points rather than transcribing everything.
-Link to the original if it's accessible (e.g., a URL). The docs are a
-distilled reference, not a document archive.
+If the original is accessible via URL, a link is fine — but never link to local
+raw_data paths. The docs are a distilled reference, not a document archive.
 
 ---
 
@@ -89,23 +97,50 @@ When extracted knowledge could go to multiple places, use this priority:
 2. Is it about **a specific component's API**? → `docs/<component>/api.md`
 3. Is it about **a specific component's data**? → `docs/<component>/data-model.md`
 4. Is it about **a specific component** generally? → `docs/<component>/README.md`
-5. Is it about **global API surface**? → `docs/api.md`
-6. Is it about **data model / schema**? → `docs/data-model.md`
-7. Is it about **infrastructure/deploy**? → `docs/deployment.md`
-8. Is it about **code patterns/conventions**? → `docs/codestyle.md`
-9. Is it about **system architecture**? → `docs/high-level-design.md`
+5. Is it about **an external service or integration**? → `docs/integrations.md` (if it exists)
+6. Is it about **global API surface**? → `docs/api.md`
+7. Is it about **data model / schema**? → `docs/data-model.md`
+8. Is it about **infrastructure/deploy**? → `docs/deployment.md`
+9. Is it about **code patterns/conventions**? → `docs/codestyle.md`
+10. Is it about **system architecture**? → `docs/high-level-design.md`
 
 ---
 
-## Appending to existing files
+## Integrating into existing files
 
-When adding extracted knowledge to an existing file:
+The goal is seamless absorption — the reader shouldn't be able to tell which parts
+came from code analysis and which from ingested files.
 
-- Find the appropriate section (by heading) and append within it.
-- If no appropriate section exists, add a new section at the end (before any
-  "Related Documents" section).
-- Use a horizontal rule (`---`) to separate newly ingested content from existing.
-- Add the source attribution: `> Source: raw_data/<type>/<filename>, ingested <YYYY-MM-DD>`
+### When knowledge fits an existing section
+
+- Find the appropriate section (by heading) and weave the new information in.
+- Update existing content rather than appending a separate block. If a component's
+  README lists 3 dependencies and the ingested file reveals a 4th, add it to the
+  existing list — don't create a new "Ingested Dependencies" section.
+- Rewrite sentences if needed to incorporate the new knowledge naturally.
+
+### When knowledge doesn't fit anywhere
+
+Some ingested knowledge doesn't map to existing doc structure — decisions not yet
+implemented, future plans, exploratory ideas, stakeholder constraints that aren't
+reflected in code yet. For these:
+
+- Add a section in the most relevant doc. Good section names:
+  - `## Planned Changes` — decisions made but not yet implemented
+  - `## Open Questions` — unresolved discussions or trade-offs
+  - `## Constraints` — external constraints not visible in code (legal, business, SLA)
+- Use ADR format in `rationale.md` for decisions, even if not yet implemented —
+  mark them with `Status: accepted (not yet implemented)`.
+- If the knowledge is truly orphaned (doesn't fit any doc), create a brief entry
+  in `high-level-design.md` under Cross-Cutting Concerns.
+
+### Formatting
+
+- Use a horizontal rule (`---`) to visually separate newly added sections from
+  existing content, but only for new sections — not for inline updates.
+- Add an ingestion date as an HTML comment for internal tracking only:
+  `<!-- Ingested: YYYY-MM-DD -->` — this is invisible to readers but helps Lumen
+  track what was added when.
 
 ---
 
@@ -114,15 +149,17 @@ When adding extracted knowledge to an existing file:
 After processing all files:
 
 1. Update `AGENTS.md` metadata (last ingest date).
-2. Print a summary table:
+2. Print a summary table showing what knowledge was extracted and where it landed:
    ```
    Ingested 4 files:
 
-   | File | Type | Routed to |
-   |------|------|-----------|
-   | standup-2025-06-01.md | transcript | docs/rationale.md |
-   | client-req.pdf | document | docs/api-gateway/README.md, docs/data-model.md |
-   | arch-whiteboard.png | screenshot | docs/high-level-design.md |
-   | slack-thread.txt | email | docs/codestyle.md |
+   | File | Knowledge extracted | Integrated into |
+   |------|-------------------|-----------------|
+   | standup-2025-06-01.md | Decision: switch to event-driven auth | docs/rationale.md (new ADR entry) |
+   | client-req.pdf | 3 new API requirements, SLA constraint | docs/api-gateway/README.md, docs/high-level-design.md |
+   | arch-whiteboard.png | Component topology, data flow | docs/high-level-design.md (updated architecture diagram) |
+   | slack-thread.txt | Naming convention for event handlers | docs/codestyle.md (added to Idioms section) |
    ```
 3. If any file couldn't be processed or routed, flag it to the user.
+4. If knowledge was placed in new sections (Planned Changes, Open Questions, etc.),
+   call them out explicitly so the user knows where to find them.

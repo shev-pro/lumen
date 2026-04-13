@@ -1,28 +1,29 @@
 # Init Template — Documentation Structure
 
-This is the directory structure created by `/lumen init`. Files are markdown stubs
-populated with section headers from `references/templates.md`.
+This is the directory structure created by `/lumen init`. The exact set of docs is
+determined by the project fingerprint — not by a fixed menu of options.
 
 ---
 
 ## Directory tree
 
-The exact set of docs depends on the option the user chose (Minimal, Component-split,
-or Full suite). Below is the full suite — omit files not selected.
+The fingerprint-driven documentation strategy selects which files to create.
+Below is the full possible set — only create files selected by the strategy.
 
 ```
-AGENTS.md                              # Entry point — use template from templates.md
+AGENTS.md                              # Entry point — always created
 docs/
 ├── high-level-design.md               # Always created
 ├── <component-name>/                  # One per detected component
 │   ├── README.md                      # Always created per component
-│   ├── api.md                         # Only if component exposes an API
-│   └── data-model.md                  # Only if component has its own data model
-├── api.md                             # Only for Full suite
-├── data-model.md                      # Only for Full suite
-├── codestyle.md                       # Component-split and Full suite
-├── rationale.md                       # Component-split and Full suite
-├── deployment.md                      # Component-split and Full suite
+│   ├── api.md                         # Only if component exposes an API (Deep scan)
+│   └── data-model.md                  # Only if component has its own data model (Deep scan)
+├── api.md                             # If project type includes API service
+├── data-model.md                      # If database/storage detected
+├── integrations.md                    # If integration density > 3
+├── codestyle.md                       # If conventions exist beyond linter configs
+├── rationale.md                       # If domain complexity is high
+├── deployment.md                      # If infra/deploy configs detected
 └── raw_data/                          # Always created
     ├── .gitignore
     ├── README.md
@@ -36,21 +37,22 @@ docs/
         └── .gitkeep
 ```
 
-### Option mapping
+### Document selection guide
 
-| Document | Minimal | Component-split | Full suite |
-|----------|---------|----------------|------------|
-| AGENTS.md | ✅ | ✅ | ✅ |
-| high-level-design.md | ✅ | ✅ | ✅ |
-| component READMEs | — | ✅ | ✅ |
-| component api.md | — | — | ✅ |
-| component data-model.md | — | — | ✅ |
-| api.md (global) | — | — | ✅ |
-| data-model.md (global) | — | — | ✅ |
-| codestyle.md | — | ✅ | ✅ |
-| rationale.md | — | ✅ | ✅ |
-| deployment.md | — | ✅ | ✅ |
-| raw_data/ | ✅ | ✅ | ✅ |
+| Document | When to create |
+|----------|---------------|
+| AGENTS.md | Always |
+| high-level-design.md | Always |
+| component READMEs | Always (one per detected component) |
+| component api.md | Deep-scan components that expose an API |
+| component data-model.md | Deep-scan components with their own data model |
+| api.md (global) | Project type includes API service |
+| data-model.md (global) | Database or structured storage detected |
+| integrations.md | Integration density > 3 external services |
+| codestyle.md | Conventions exist that linter configs don't cover |
+| rationale.md | Domain complexity is Medium or High |
+| deployment.md | Infrastructure or deploy configs detected |
+| raw_data/ | Always |
 
 ---
 

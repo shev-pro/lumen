@@ -45,6 +45,7 @@ docs/
 │   └── data-model.md                  # Component-specific data model (if applicable)
 ├── api.md                             # Global API surface (if applicable)
 ├── data-model.md                      # Global data structures, DB schema (if applicable)
+├── integrations.md                    # External services and third-party dependencies (if applicable)
 ├── codestyle.md                       # Naming, comments, idioms (if applicable)
 ├── rationale.md                       # Non-obvious decisions with reasoning (if applicable)
 ├── deployment.md                      # Build, deploy, infra (if applicable)
@@ -57,7 +58,9 @@ docs/
     └── documents/
 ```
 
-Not every project needs all docs. Pick what matters. Propose a doc list to the user.
+Not every project needs all docs. The project fingerprint (see init) determines which
+documents earn their place. A CLI tool doesn't need `api.md`; a frontend app doesn't
+need `data-model.md`. Let the project's nature drive the structure.
 
 ---
 
@@ -75,54 +78,109 @@ Not every project needs all docs. Pick what matters. Propose a doc list to the u
 
 ---
 
+## Empty Repository Guard
+
+Before executing any command, check if the repository has meaningful code. A repo
+is considered empty if it has no source files — only config stubs, a bare README,
+or nothing at all.
+
+- `/lumen init` → proceed, but switch to **bootstrapping mode**: ask the user what
+  they're building and create a provisional fingerprint. See
+  `references/project-fingerprint.md` § "Bootstrapping Mode" for the full procedure.
+- `/lumen scan`, `/lumen update`, `/lumen status`, `/lumen rules` → do NOT proceed.
+  Explain that Lumen needs code to work with and suggest running `/lumen init` first
+  to set up stubs, or adding code and then running the command.
+- `/lumen ingest` → only proceed if `docs/raw_data/` exists and has files.
+- `/lumen <question>` → explain there's no documentation yet and suggest init.
+
+---
+
 ## Command: `/lumen init`
 
-Assess the codebase and set up the documentation structure. This is always the first command.
+Assess the codebase, build a project fingerprint, and set up a tailored documentation
+structure. This is always the first command.
+
+Read `references/project-fingerprint.md` for the full fingerprinting methodology.
 
 ### Procedure
 
-1. **Explore the codebase**:
-   - Read top-level files: `go.mod`, `package.json`, `Cargo.toml`, `Makefile`, `Dockerfile`, etc.
-   - Map the directory structure (depth 4–5).
-   - Identify entry points, main packages, and key abstractions.
-   - Check for existing docs, README, or AGENTS.md.
-   - Detect code style tooling: linter configs, formatters, editor configs.
-   - If a monorepo/workspace is detected → go to **Monorepo Decision** below.
+1. **Build the Project Fingerprint**:
 
-2. **Assess project size**:
-   - **Small:** <10 packages/modules, single service.
-   - **Medium:** 10–30 packages, a few distinct components.
-   - **Large:** 30+ packages, multiple services/domains, or monorepo.
-   If ambiguous, **ask the user**.
+   Explore the codebase to construct a multidimensional profile — not just "how big"
+   but "what kind of beast is this." Read `references/project-fingerprint.md` for
+   detailed guidance on what to look for.
 
-3. **Auto-discover components**: look for top-level modules, services, packages, or
-   meaningful directories. Propose the list:
-   *"I detected these components: [list]. Should I track all of them, or adjust?"*
+   Gather these signals:
+   - **Project type**: API service, frontend, CLI, library, IaC, data pipeline,
+     monorepo, mobile, full-stack, event-driven (can be multiple)
+   - **Stack**: languages, frameworks, databases, message brokers, cloud services
+   - **Complexity signals**: entry point count, integration density, domain complexity
+     (low/medium/high), language diversity, pattern diversity (REST/GraphQL/gRPC/etc.)
+   - **Maturity signals**: repo age, existing docs, test coverage, CI/CD, contributor count
+   - **Components detected**: list with one-liner descriptions
 
-4. **Propose document structure** — present 2–3 options:
+   Present the fingerprint summary to the user and ask for corrections. The user knows
+   things the code doesn't reveal — planned migrations, deprecated components, external
+   constraints.
 
-   **Option A — Minimal** (small projects):
-   `AGENTS.md` + `docs/high-level-design.md` only.
+   If a monorepo/workspace is detected → go to **Monorepo Decision** below.
 
-   **Option B — Component-split** (medium projects):
-   `AGENTS.md` + HLD + one folder per major component.
+2. **Derive Documentation Strategy**:
 
-   **Option C — Full suite** (large/complex projects):
-   `AGENTS.md` + HLD + component folders (with API/data model) + global API + data model + deployment.
+   Based on the fingerprint, propose a tailored set of documents — not a fixed menu
+   of options. The project's nature determines what gets documented.
 
-   State your recommendation with a short reason, then let user decide.
+   Always present:
+   - `AGENTS.md` + `docs/high-level-design.md`
 
-5. **Create the structure**: generate `docs/` directory with stub files for all
+   Then add documents driven by the fingerprint:
+   - API service detected → `api.md`
+   - Database detected → `data-model.md`
+   - IaC detected → `deployment.md` (as primary doc, not secondary)
+   - Integration density > 3 → `integrations.md`
+   - Domain complexity high → `rationale.md` from day one
+   - Conventions not covered by linter configs → `codestyle.md`
+
+   Skip documents that don't earn their place, with a reason:
+   *"Skipping codestyle.md — .eslintrc + .prettierrc cover your conventions."*
+
+   See `references/project-fingerprint.md` § "From Fingerprint to Documentation Strategy"
+   for the full decision logic.
+
+3. **Assign Scan Depth per Component**:
+
+   Not every component deserves the same documentation effort. Based on the fingerprint,
+   assign each component a scan depth:
+
+   - **Deep**: core domain, complex logic, high integration density, frequently changed.
+     Full README with all sections, diagrams, flows, rationale discovery.
+   - **Standard**: clear responsibility, moderate complexity, important but not core.
+     README with responsibility, key files, dependencies, one primary flow.
+   - **Light**: thin wrappers, adapters, config modules, generated code.
+     3–5 line README: what it wraps, why it exists, pointer to code.
+
+   Present the scan plan with depth assignments and batching:
+   ```
+   Deep:     auth, billing       (core domain, complex logic)
+   Standard: notifications, users, api-gateway, worker
+   Light:    infra               (Terraform wrapper)
+   ```
+
+4. **Create the structure**: generate `docs/` directory with stub files for all
    selected documents. Set up `docs/raw_data/` with `.gitignore` and `README.md`.
    Read `references/init-template.md` for stub contents and raw_data setup.
 
-6. **Print the welcome message**:
+5. **Print the welcome message**:
    ```
    🔆 Lumen initialized for <repo-name>.
 
+   Project type: <type(s)>
+   Stack: <stack summary>
+   Domain complexity: <Low | Medium | High>
+
    Documentation structure created at docs/
-   Structure: Option <X> (<name>)
-   Components: <list>
+   Documents: <list of created docs with reasons>
+   Components: <list with scan depth assignments>
 
    Available commands:
      /lumen scan      Scan codebase and generate documentation
@@ -162,6 +220,7 @@ that turns code into docs.
 Read `references/scan-guide.md` for detailed scan checklists (what to look at, what to document).
 Read `references/scan-parallel.md` for the parallel orchestration model.
 Read `references/templates.md` for document templates.
+Read `references/project-fingerprint.md` if no fingerprint exists yet (first scan without init).
 
 ### Writing Guidelines
 
@@ -176,26 +235,47 @@ Read `references/templates.md` for document templates.
 ### Procedure (parallel orchestration)
 
 The scan uses a three-phase model to document components in parallel using subagents.
+Before starting, verify the repo has code to scan — if it's empty, stop and guide
+the user (see Empty Repository Guard above).
 
-**Phase 1 — Plan & Global Scan** *(main agent, sequential)*
+**Phase 1 — Fingerprint, Plan & Global Scan** *(main agent, sequential)*
 
-1. **Read existing docs** (if any) to understand current state. If docs exist, identify
+1. **Load or build the project fingerprint**:
+   - If `/lumen init` was run, the fingerprint already exists in `AGENTS.md` metadata.
+     Read it and verify it's still accurate (new components? changed stack?).
+   - If no fingerprint exists (scan without init), build one now following
+     `references/project-fingerprint.md`. Present it to the user for confirmation.
+   - The fingerprint determines: which global docs to write, which components to scan,
+     and at what depth.
+
+2. **Read existing docs** (if any) to understand current state. If docs exist, identify
    gaps, stale sections, or missing components — don't regenerate from scratch.
 
-2. **Detect components**: scan the repo for top-level modules, services, packages.
-   Confirm with the user if new or removed.
+3. **Detect components**: scan the repo for top-level modules, services, packages.
+   Confirm with the user if new or removed. Assign scan depth (Deep/Standard/Light)
+   to each component based on the fingerprint — see `references/project-fingerprint.md`
+   § "Scan Depth Assignment".
 
-3. **Scan and write global documents** using templates from `references/templates.md`:
-   - `docs/high-level-design.md` — architecture, component map, key decisions, data flow
-   - `docs/codestyle.md` — naming, comments, idioms (skip what linter configs already cover)
-   - `docs/deployment.md` — build, deploy, infra, CI/CD
-   - `docs/data-model.md` — entities, relationships, schema (if applicable)
-   - `docs/api.md` — global API surface (if applicable)
+4. **Scan and write global documents** — only those selected by the documentation
+   strategy. Use templates from `references/templates.md`:
+   - `docs/high-level-design.md` — always
+   - `docs/api.md` — if project type includes API service
+   - `docs/data-model.md` — if database/storage detected
+   - `docs/integrations.md` — if integration density > 3
+   - `docs/codestyle.md` — if conventions exist beyond linter configs
+   - `docs/deployment.md` — if infra/deploy configs detected
+   - `docs/rationale.md` — if domain complexity is high (start the file; content
+     comes from rationale discovery during component scans)
 
-4. **Build discovery plan**: prepare a brief for each component (name, root paths,
-   description, output path, focus areas).
+5. **Build discovery plan**: prepare a brief for each component including:
+   - Name, root paths, description, output path
+   - **Assigned scan depth** (Deep, Standard, or Light) — this controls how much
+     the subagent documents. See `references/scan-parallel.md` for depth-specific
+     agent prompts.
+   - Focus areas based on the fingerprint (e.g., "this component has 3 external
+     integrations — document them")
 
-5. **Determine batch size**:
+6. **Determine batch size**:
    - ≤5 components → launch all agents at once
    - 6–15 → batch in groups of 5
    - 15+ → batch in groups of 5, ask user for priority order first
@@ -203,24 +283,36 @@ The scan uses a three-phase model to document components in parallel using subag
 **Phase 2 — Parallel Discovery** *(subagents, parallel)*
 
 Launch one Agent per component using the Agent tool. Each agent:
-- Receives a focused brief with component boundaries and project context
-- Writes ONLY to `docs/<component-name>/` (README.md, and optionally api.md, data-model.md)
+- Receives a focused brief with component boundaries, project context,
+  and **its assigned scan depth**
+- Writes ONLY to `docs/<component-name>/`
+- Deep components get full README + optional api.md + data-model.md
+- Standard components get README with core sections
+- Light components get a minimal README (3–5 lines)
 - Cannot modify global docs or other component folders
 
 Launch all agents for a batch in a **single message** to enable true parallelism.
-See `references/scan-parallel.md` for the full agent prompt template.
+See `references/scan-parallel.md` for depth-specific agent prompt templates.
 
 **Phase 3 — Synthesize** *(main agent, sequential)*
 
-1. Read all generated component docs to verify quality.
-2. Cross-reference `high-level-design.md` with newly discovered dependencies.
-3. Add inter-component links in all docs (Related Documents sections).
-4. Report: summary of what was documented, skipped, and any gaps.
+1. Read all generated component docs to verify quality against their assigned depth.
+2. **Quality checks**:
+   - Verify file references point to files that actually exist
+   - Check that Mermaid diagrams use valid syntax
+   - Ensure Deep components have substantive content (not just headers)
+   - Ensure Light components are genuinely brief (not padded)
+3. Cross-reference `high-level-design.md` with newly discovered dependencies.
+4. Add inter-component links in all docs (Related Documents sections).
+5. If integration density > 3, consolidate external service references into
+   `docs/integrations.md`.
+6. Report: summary of what was documented (by depth), skipped, and any gaps.
 
 ### Rationale Discovery
 
 While scanning, **actively watch for code that looks unusual or contrary to best practices**.
-When you spot something, propose 2–3 hypotheses to the user:
+This is especially important for Deep-scan components. When you spot something,
+propose 2–3 hypotheses to the user:
 
 > I noticed `<what>`. This is unusual because `<why>`. Possible reasons:
 >
@@ -244,8 +336,9 @@ instructions to update rather than regenerate. Preserve any manually written con
 
 ## Command: `/lumen ingest`
 
-Process files dropped into `docs/raw_data/` and distribute extracted knowledge
-into the appropriate documentation files.
+Process files dropped into `docs/raw_data/` and absorb extracted knowledge
+into the appropriate documentation files. Raw files are gitignored, so the
+knowledge must be fully integrated — never reference raw file paths in docs.
 
 Read `references/ingest-guide.md` for detailed processing rules.
 
@@ -259,17 +352,21 @@ Read `references/ingest-guide.md` for detailed processing rules.
    - **Screenshots**: describe what's shown, extract architectural/UI/config information
    - **Documents**: extract specs, requirements, constraints, domain knowledge
 
-3. **Route extracted knowledge** to the right doc:
+3. **Integrate extracted knowledge** into the right doc — merge it naturally into
+   existing sections when possible, create new sections as fallback:
    - Architectural decisions / rationale → `docs/rationale.md`
    - Architecture info → `docs/high-level-design.md`
    - Component-specific info → `docs/<component>/README.md`
    - API specs → `docs/api.md` or `docs/<component>/api.md`
    - Data model info → `docs/data-model.md` or `docs/<component>/data-model.md`
+   - External service info → `docs/integrations.md` (if it exists)
    - Infrastructure / deploy info → `docs/deployment.md`
    - Code patterns / conventions → `docs/codestyle.md`
+   - Decisions not yet implemented → `docs/rationale.md` with status "accepted (not yet implemented)"
+   - Future plans / ideas → relevant doc under "Planned Changes" section
 
-4. **Report**: list each file processed and where its content landed.
-   Do NOT delete raw files — the user manages their own raw_data.
+4. **Report**: list each file processed, what knowledge was extracted, and where
+   it was integrated. Do NOT delete raw files — the user manages their own raw_data.
 
 ---
 
@@ -281,6 +378,8 @@ Incremental documentation sync based on recent repository changes.
 
 1. **Determine scope**: check git log for commits since last update. Use the last
    known commit SHA stored in `AGENTS.md` metadata. If none, use last 20 commits.
+   If the repo has no commits or no source code, stop and guide the user
+   (see Empty Repository Guard).
 
 2. **Analyze diffs**: identify which components were touched, what changed
    structurally (new files, deleted files, renamed modules, new dependencies).
@@ -381,6 +480,7 @@ Natural language query against the documentation.
    - Component questions → `docs/<component>/README.md`
    - API questions → `api.md` or component-specific `api.md`
    - Data questions → `data-model.md`
+   - Integration/external service questions → `integrations.md`
    - Deploy/infra questions → `deployment.md`
    - "Why" questions → `rationale.md`
    - Code style questions → `codestyle.md`
@@ -432,6 +532,7 @@ When docs already exist:
 
 ## References
 
+- Project fingerprint → `references/project-fingerprint.md` *(read during /lumen init, /lumen scan without prior init)*
 - Init structure + stubs → `references/init-template.md` *(read during /lumen init)*
 - Document templates → `references/templates.md` *(read during /lumen scan, /lumen rules)*
 - Scan checklists → `references/scan-guide.md` *(read during /lumen scan)*
