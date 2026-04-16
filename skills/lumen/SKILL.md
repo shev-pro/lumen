@@ -1,15 +1,10 @@
 ---
 name: lumen
 description: >
-  Lumen is the persistent knowledge keeper for any Git repository. It builds,
-  maintains, and serves structured documentation that lives inside the repo,
-  serving both humans and AI agents as navigation aids.
-  Use this skill whenever the user invokes a /lumen command (/lumen init,
-  /lumen scan, /lumen ingest, /lumen update, /lumen status, /lumen rules,
-  or /lumen <question>).
-  Also trigger when the user mentions "lumen", "knowledge base", "project knowledge",
-  "document the project", "what does this project do", or asks broad architectural
-  questions that would benefit from accumulated project knowledge.
+  Lumen: project knowledge keeper. Trigger for any /lumen command
+  (init, scan, ingest, update, status, rules, or <question>), or when the user
+  mentions "lumen", "knowledge base", "document the project", or asks broad
+  architectural questions about the codebase.
 ---
 
 # Lumen — Project Knowledge Keeper
