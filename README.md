@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <code>/lumen init</code> · <code>/lumen scan</code> · <code>/lumen ingest</code> · <code>/lumen update</code> · <code>/lumen status</code> · <code>/lumen rules</code> · <code>/lumen &lt;question&gt;</code>
+  <code>/lumen init</code> · <code>/lumen scan</code> · <code>/lumen ingest</code> · <code>/lumen update</code> · <code>/lumen status</code> · <code>/lumen lint</code> · <code>/lumen rules</code> · <code>/lumen &lt;question&gt;</code>
 </p>
 
 ---
@@ -27,7 +27,8 @@ It produces three things:
 
 ## Principles
 
-- **Code is the source of truth.** Docs point to it, never duplicate it.
+- **Two sources of truth.** Code is the source of truth for implementation — docs point to it, never duplicate it. Project artifacts (meetings, specs, decisions, stakeholder context) are the source of truth for context and rationale — ingested and synthesized, not replaced by the code.
+- **Compound over time.** Every scan, ingest, query, and lint pass makes the wiki richer. Notable answers get filed, contradictions flagged, gaps surfaced. Knowledge not persisted is knowledge lost.
 - **Concise over comprehensive.** Each doc earns its existence.
 - **Pointers over explanations.** Link to `file:function()`, don't re-describe code.
 - **Mermaid diagrams** for architecture, data flow, and sequences.
@@ -42,8 +43,9 @@ It produces three things:
 | `/lumen ingest` | Absorb raw files (transcripts, emails, screenshots, docs) into structured docs |
 | `/lumen update` | Incremental sync from recent git commits |
 | `/lumen status` | Show documentation coverage, freshness, and gaps |
+| `/lumen lint` | Audit documentation health: contradictions, stale claims, orphans, broken refs |
 | `/lumen rules` | Install rule files for Cursor, Claude Code, and Codex |
-| `/lumen <question>` | Query the documentation in natural language |
+| `/lumen <question>` | Query the documentation in natural language (and optionally file the answer as a new page) |
 
 ## Project Fingerprint
 
@@ -66,6 +68,7 @@ determines which documents earn their place.
 ```
 AGENTS.md                       # Entry point — project overview + doc index
 docs/
+├── log.md                      # Append-only operation log (always created)
 ├── high-level-design.md        # Architecture, component map, key decisions
 ├── <component>/                # Per-component folder
 │   ├── README.md               # Component deep dive
@@ -75,10 +78,15 @@ docs/
 ├── data-model.md               # Database schema, entities, migrations
 ├── integrations.md             # External services and third-party dependencies
 ├── codestyle.md                # Naming, patterns, idioms
-├── rationale.md                # Non-obvious decisions with reasoning (ADR format)
+├── rationale.md                # Non-obvious technical decisions with reasoning (ADR format)
+├── project-context.md          # Stakeholder context, requirements, business constraints
 ├── deployment.md               # Build, deploy, CI/CD, monitoring
 └── raw_data/                   # Local inbox for /lumen ingest
 ```
+
+`rationale.md` captures *technical decisions* ("we chose Postgres over MySQL because…"). `project-context.md` captures the *business and stakeholder layer* that surrounds them ("client requires GDPR compliance", "product team prioritizes mobile-first"). When a decision is driven by a business constraint, record the constraint in `project-context.md` and link to it from the rationale entry.
+
+`log.md` is append-only: every `/lumen` command adds a one-line entry (`## [YYYY-MM-DD] <command> | <summary>`). Parse with `grep "^## \[" docs/log.md | tail -10`.
 
 ## Scan Depths
 
@@ -108,6 +116,22 @@ screenshots, documents). Knowledge is **absorbed, not referenced** — raw files
 gitignored, so the extracted information is woven directly into existing docs. Decisions
 not yet implemented go into `rationale.md`; future plans and ideas get dedicated
 sections in the most relevant doc.
+
+## Lint — Documentation Health
+
+Where `/lumen status` measures *coverage* (what exists), `/lumen lint` measures *health*:
+
+- **Contradictions** — same fact stated differently across docs (config values, ownership, architecture claims)
+- **Stale claims** — rationale entries marked "not yet implemented" that appear to have shipped, component docs referring to renamed/deleted files
+- **Orphan pages** — docs not linked from `AGENTS.md` or any other doc
+- **Orphan concepts** — terms mentioned in 3+ docs with no dedicated page
+- **Broken references** — `file:function()` pointers to code that no longer exists
+
+Findings are reported grouped by severity; Lumen never silently resolves contradictions. Run periodically or after a burst of ingests/updates.
+
+## Query → Wiki Growth
+
+`/lumen <question>` answers in natural language, but when the answer required non-trivial synthesis across multiple docs, Lumen offers to file it as a new page. Accepted answers become part of the wiki — the next session starts with them already understood. Q&A sessions compound into durable knowledge.
 
 ## Rationale Discovery
 
@@ -190,6 +214,7 @@ skills/lumen/
     ├── scan-guide.md               # What to scan, what to document, what to skip
     ├── scan-parallel.md            # Parallel orchestration and depth-specific agent prompts
     ├── ingest-guide.md             # Processing rules for raw data ingestion
+    ├── lint-guide.md               # Lint checks and resolution guidance
     ├── init-template.md            # Init directory structure and stub contents
     └── agents-template.md          # Rule file guide (formats, procedure, AGENTS.md section)
 ```
