@@ -5,6 +5,113 @@ and `/lumen rules`.
 
 ---
 
+## Log Template
+
+`docs/log.md` is always created at init and appended to by every Lumen command.
+It is append-only — never edit or delete past entries.
+
+```markdown
+# Lumen Log
+
+Append-only record of Lumen operations for <repo-name>.
+Each entry: `## [YYYY-MM-DD] <command> | <summary>`
+Parse with: `grep "^## \[" docs/log.md | tail -10`
+
+---
+
+## [YYYY-MM-DD] init | Initialized for <repo-name> — <type(s)>, <stack summary>
+```
+
+**Entry formats by command:**
+
+| Command | Entry format |
+|---------|-------------|
+| init | `## [YYYY-MM-DD] init \| Initialized for <repo-name> — <type(s)>, <stack>` |
+| scan | `## [YYYY-MM-DD] scan \| <N> components (<deep>D/<std>S/<light>L), <M> global docs` |
+| ingest | `## [YYYY-MM-DD] ingest \| <N> files — <knowledge types extracted>` |
+| update | `## [YYYY-MM-DD] update \| Commits <SHA>..<SHA> — <N> docs updated` |
+| lint | `## [YYYY-MM-DD] lint \| <N> contradictions, <M> stale claims, <K> orphan concepts` |
+| query | `## [YYYY-MM-DD] query \| "<question summary>" — <filed as docs/X.md \| not filed>` |
+
+---
+
+## Project Context Template
+
+`docs/project-context.md` captures the non-technical layer: what stakeholders need,
+why the project exists, constraints not visible in code, and team/process context.
+This is the source of truth for *context and rationale*, complementing the code as
+source of truth for implementation.
+
+```markdown
+# Project Context
+
+<1-2 sentences: what this project is for and who it serves.>
+
+## Stakeholders
+
+<Who commissioned or owns this project. What they care about.>
+
+- **<Stakeholder / team>** — <what they need from this project>
+- ...
+
+## Goals & Success Criteria
+
+<What does success look like? What metrics or outcomes matter?>
+
+- ...
+
+## Constraints
+
+<Hard limits that shape the project — legal, contractual, technical, timeline.>
+
+- **<Constraint>** — <source and implication>
+- ...
+
+## Requirements
+
+<Key functional or non-functional requirements captured from specs, stakeholder
+conversations, or ingested documents. Link to rationale.md for decisions they drove.>
+
+### Must Have
+
+- ...
+
+### Should Have
+
+- ...
+
+### Won't Have (in scope)
+
+- ...
+
+## Team & Process
+
+<How the team works. Relevant conventions, cadences, or constraints on process.>
+
+- **Branching strategy:** ...
+- **Release cadence:** ...
+- **On-call / ownership:** ...
+
+## Planned Changes
+
+<Decisions made or requirements received that are not yet implemented.>
+
+- **<Change>** — <source, expected timeline if known>
+
+## Open Questions
+
+<Unresolved topics from stakeholder conversations or planning sessions.>
+
+- **<Question>** — <raised by whom, when, what's blocking resolution>
+
+## Related Documents
+
+- [Rationale](rationale.md) — technical decisions driven by these constraints
+- [High-Level Design](high-level-design.md)
+```
+
+---
+
 ## AGENTS.md Template
 
 ```markdown
@@ -47,7 +154,9 @@ and `/lumen rules`.
 - [Data Model](docs/data-model.md) — Database schema and data flows
 - [Code Style](docs/codestyle.md) — Naming conventions, comments, idioms
 - [Rationale](docs/rationale.md) — Non-obvious decisions with reasoning
+- [Project Context](docs/project-context.md) — Stakeholder context, requirements, constraints
 - [Deployment](docs/deployment.md) — Build, deploy, infrastructure
+- [Log](docs/log.md) — Operation history
 
 ## Development
 
@@ -71,6 +180,8 @@ and `/lumen rules`.
 | **Scan depths** | <Deep: list, Standard: list, Light: list> |
 | **Fingerprint status** | <active / provisional> |
 | **Last scan** | <YYYY-MM-DD> |
+| **Last ingest** | <YYYY-MM-DD> |
+| **Last lint** | <YYYY-MM-DD> |
 | **Last update commit** | <short SHA> |
 | **Lumen version** | 2.0 |
 ```

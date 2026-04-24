@@ -13,6 +13,7 @@ Below is the full possible set — only create files selected by the strategy.
 ```
 AGENTS.md                              # Entry point — always created
 docs/
+├── log.md                             # Append-only operation log — always created
 ├── high-level-design.md               # Always created
 ├── <component-name>/                  # One per detected component
 │   ├── README.md                      # Always created per component
@@ -22,7 +23,8 @@ docs/
 ├── data-model.md                      # If database/storage detected
 ├── integrations.md                    # If integration density > 3
 ├── codestyle.md                       # If conventions exist beyond linter configs
-├── rationale.md                       # If domain complexity is high
+├── rationale.md                       # If domain complexity is Medium or High
+├── project-context.md                 # If non-technical context exists or is expected
 ├── deployment.md                      # If infra/deploy configs detected
 └── raw_data/                          # Always created
     ├── .gitignore
@@ -42,6 +44,7 @@ docs/
 | Document | When to create |
 |----------|---------------|
 | AGENTS.md | Always |
+| log.md | Always |
 | high-level-design.md | Always |
 | component READMEs | Always (one per detected component) |
 | component api.md | Deep-scan components that expose an API |
@@ -51,6 +54,7 @@ docs/
 | integrations.md | Integration density > 3 external services |
 | codestyle.md | Conventions exist that linter configs don't cover |
 | rationale.md | Domain complexity is Medium or High |
+| project-context.md | Non-technical context exists or is expected (stakeholder constraints, product requirements, business rules not in code) |
 | deployment.md | Infrastructure or deploy configs detected |
 | raw_data/ | Always |
 
@@ -61,6 +65,14 @@ docs/
 All doc stubs use the templates from `references/templates.md`. Create each file
 with the full template structure, replacing HTML comments with `<!-- TODO -->` markers.
 Do NOT fill in content during init — that's what `/lumen scan` is for.
+
+**Exceptions — create with real content, not stubs:**
+
+- `docs/log.md` — create with the first real entry (the init event), not a stub.
+  Use the Log Template from `references/templates.md`.
+- `docs/project-context.md` — create with the stub template, but if the user
+  described non-technical context during fingerprinting, write that content in
+  directly rather than leaving it empty.
 
 For component README stubs, use the Component README Template.
 For global docs, use the corresponding template (HLD, API, Data Model, etc.).

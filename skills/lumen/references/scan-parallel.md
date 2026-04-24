@@ -41,6 +41,10 @@ This phase runs in the main agent context. Do NOT delegate it to subagents.
    - `docs/integrations.md` — if integration density > 3
    - `docs/codestyle.md` — if conventions exist beyond linter configs
    - `docs/deployment.md` — if infra/deploy configs detected
+   - `docs/rationale.md` — if domain complexity is Medium or High (start the file;
+     content comes from rationale discovery during component scans)
+   - `docs/project-context.md` — if non-technical context exists or was ingested
+     (stakeholder constraints, product requirements, business rules)
 
    Global docs MUST be written before Phase 2, because subagents need global
    context (stack, conventions) to produce good component docs.
@@ -292,31 +296,46 @@ After all subagents complete:
    subagents, consolidate them, and present to the user for confirmation before
    adding to `docs/rationale.md`.
 
-7. **Update `AGENTS.md`**:
+7. **Detect contradictions**: scan across all generated and existing docs for
+   conflicting claims — same configuration value documented differently, two
+   components claiming ownership of the same responsibility, or docs that
+   contradict entries in `project-context.md` or `rationale.md`. Surface these
+   to the user; do not silently resolve them.
+
+8. **Surface orphan concepts**: identify terms or component names mentioned in 3 or
+   more docs that do not have their own page. Propose these as candidate additions:
+   *"The concept `<X>` appears in <N> docs but has no dedicated page. Worth adding?"*
+
+9. **Update `AGENTS.md`**:
    - Refresh the Documentation Index with all generated docs
    - Store the project fingerprint in the Metadata section
    - Update last scan date and commit SHA
 
-8. **Report results**:
-   ```   
-   🔆 Lumen scan complete for <repo-name>.
+10. **Append to `docs/log.md`**:
+    `## [YYYY-MM-DD] scan | <N> components (<deep> deep, <std> standard, <light> light), <M> global docs`
 
-   Scanned <N> components (<deep> deep, <std> standard, <light> light):
+11. **Report results**:
+    ```
+    🔆 Lumen scan complete for <repo-name>.
 
-   | Component | Depth | Docs created | Key findings |
-   |-----------|-------|-------------|-------------|
-   | auth | Deep | README, api.md | 4 endpoints, Stripe + Auth0 integration |
-   | billing | Deep | README, data-model.md | 12 tables, complex state machine |
-   | api-gateway | Standard | README | Routes to 3 internal services |
-   | worker | Standard | README | Cron-based, uses Redis queue |
-   | infra | Light | README | Terraform wrapper for AWS |
+    Scanned <N> components (<deep> deep, <std> standard, <light> light):
 
-   Global docs updated: high-level-design, deployment, integrations, data-model
-   Cross-references added: 8 inter-component links
-   Rationale flags: 3 (pending user confirmation)
+    | Component | Depth | Docs created | Key findings |
+    |-----------|-------|-------------|-------------|
+    | auth | Deep | README, api.md | 4 endpoints, Stripe + Auth0 integration |
+    | billing | Deep | README, data-model.md | 12 tables, complex state machine |
+    | api-gateway | Standard | README | Routes to 3 internal services |
+    | worker | Standard | README | Cron-based, uses Redis queue |
+    | infra | Light | README | Terraform wrapper for AWS |
 
-   Run `/lumen status` to see full coverage.
-   ```
+    Global docs updated: high-level-design, deployment, integrations, data-model
+    Cross-references added: 8 inter-component links
+    Rationale flags: 3 (pending user confirmation)
+    Contradictions found: 1 (token TTL mismatch — flagged above)
+    Orphan concepts proposed: 2 (EventBus, circuit breaker pattern)
+
+    Run `/lumen status` to see full coverage. Run `/lumen lint` for a quality audit.
+    ```
 
 ---
 

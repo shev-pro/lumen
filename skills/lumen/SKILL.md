@@ -15,7 +15,13 @@ future interaction with the codebase starts informed, not from scratch.
 
 ## Principles
 
-- **Code is the source of truth.** Docs point to it, never duplicate it.
+- **Two sources of truth.** Code is the source of truth for implementation — docs
+  point to it, never duplicate it. Project artifacts (meetings, specs, decisions,
+  stakeholder context) are the source of truth for context and rationale — they
+  are ingested and synthesized, not replaced by the code.
+- **Compound over time.** Every scan, ingest, query, and lint pass makes the wiki
+  richer. File notable answers, flag contradictions, surface gaps, suggest sources.
+  Knowledge that isn't persisted is knowledge lost.
 - **Concise over comprehensive.** Each doc earns its existence.
 - **Pointers over explanations.** Link to files/functions, don't re-describe them.
 - **Mermaid diagrams** for architecture, data flow, and sequences where they add clarity.
@@ -33,6 +39,7 @@ future interaction with the codebase starts informed, not from scratch.
 ```
 AGENTS.md                              # Entry point — project overview + doc index
 docs/
+├── log.md                             # Append-only operation log (always)
 ├── high-level-design.md               # Architecture, key decisions, component map
 ├── <component-name>/                  # Per-component/module folder
 │   ├── README.md                      # Component deep dive
@@ -43,6 +50,7 @@ docs/
 ├── integrations.md                    # External services and third-party dependencies (if applicable)
 ├── codestyle.md                       # Naming, comments, idioms (if applicable)
 ├── rationale.md                       # Non-obvious decisions with reasoning (if applicable)
+├── project-context.md                 # Stakeholder context, requirements, constraints (if applicable)
 ├── deployment.md                      # Build, deploy, infra (if applicable)
 └── raw_data/                          # Local inbox for /lumen ingest
     ├── .gitignore
@@ -68,6 +76,7 @@ need `data-model.md`. Let the project's nature drive the structure.
 | `/lumen ingest` | Process files in raw_data/ into structured docs |
 | `/lumen update` | Incremental sync from recent commits |
 | `/lumen status` | Show documentation coverage and health |
+| `/lumen lint` | Audit documentation quality: contradictions, orphans, stale claims |
 | `/lumen rules` | Generate rule files for Claude Code / Cursor |
 | `/lumen <question>` | Query the documentation directly |
 
@@ -85,6 +94,9 @@ or nothing at all.
 - `/lumen scan`, `/lumen update`, `/lumen status`, `/lumen rules` → do NOT proceed.
   Explain that Lumen needs code to work with and suggest running `/lumen init` first
   to set up stubs, or adding code and then running the command.
+- `/lumen lint` → only proceed if `docs/` exists and contains at least one file
+  outside `raw_data/` that is not a pure `<!-- TODO -->` stub. If not, explain
+  there's nothing to lint and suggest running `/lumen scan` first.
 - `/lumen ingest` → only proceed if `docs/raw_data/` exists and has files.
 - `/lumen <question>` → explain there's no documentation yet and suggest init.
 
@@ -135,6 +147,8 @@ Read `references/project-fingerprint.md` for the full fingerprinting methodology
    - Integration density > 3 → `integrations.md`
    - Domain complexity high → `rationale.md` from day one
    - Conventions not covered by linter configs → `codestyle.md`
+   - Non-technical context exists or is expected (stakeholder constraints, product
+     requirements, business rules not visible in code) → `project-context.md`
 
    Skip documents that don't earn their place, with a reason:
    *"Skipping codestyle.md — .eslintrc + .prettierrc cover your conventions."*
@@ -162,7 +176,9 @@ Read `references/project-fingerprint.md` for the full fingerprinting methodology
    ```
 
 4. **Create the structure**: generate `docs/` directory with stub files for all
-   selected documents. Set up `docs/raw_data/` with `.gitignore` and `README.md`.
+   selected documents. Always create `docs/log.md` and append the first entry:
+   `## [YYYY-MM-DD] init | Initialized for <repo-name> — <type(s)>, <stack summary>`
+   Set up `docs/raw_data/` with `.gitignore` and `README.md`.
    Read `references/init-template.md` for stub contents and raw_data setup.
 
 5. **Print the welcome message**:
@@ -182,6 +198,7 @@ Read `references/project-fingerprint.md` for the full fingerprinting methodology
      /lumen ingest    Process raw files into structured docs
      /lumen update    Sync docs with recent changes
      /lumen status    Show documentation coverage and health
+     /lumen lint      Audit documentation quality
      /lumen rules     Generate rule files for Claude Code / Cursor
      /lumen <question>  Ask anything about this project
    ```
@@ -259,8 +276,10 @@ the user (see Empty Repository Guard above).
    - `docs/integrations.md` — if integration density > 3
    - `docs/codestyle.md` — if conventions exist beyond linter configs
    - `docs/deployment.md` — if infra/deploy configs detected
-   - `docs/rationale.md` — if domain complexity is high (start the file; content
-     comes from rationale discovery during component scans)
+   - `docs/rationale.md` — if domain complexity is Medium or High (start the file;
+     content comes from rationale discovery during component scans)
+   - `docs/project-context.md` — if non-technical context exists or was ingested
+     (stakeholder constraints, product requirements, business rules)
 
 5. **Build discovery plan**: prepare a brief for each component including:
    - Name, root paths, description, output path
@@ -301,7 +320,17 @@ See `references/scan-parallel.md` for depth-specific agent prompt templates.
 4. Add inter-component links in all docs (Related Documents sections).
 5. If integration density > 3, consolidate external service references into
    `docs/integrations.md`.
-6. Report: summary of what was documented (by depth), skipped, and any gaps.
+6. **Detect contradictions**: read across all docs and flag claims that conflict with
+   each other — e.g., two components claiming ownership of the same responsibility,
+   or a config value documented differently in different files. Surface these to the
+   user for resolution; do not silently pick one.
+7. **Surface orphan concepts**: identify terms or concepts mentioned in 3 or more docs
+   that do not have their own page. Propose these as candidate new pages:
+   *"The concept `<X>` appears in 4 docs but has no dedicated page. Worth adding?"*
+8. **Append to `docs/log.md`**:
+   `## [YYYY-MM-DD] scan | <N> components (<deep> deep, <std> standard, <light> light), <M> global docs`
+9. Report: summary of what was documented (by depth), skipped, contradictions found,
+   orphan concepts proposed, and any gaps.
 
 ### Rationale Discovery
 
@@ -357,11 +386,16 @@ Read `references/ingest-guide.md` for detailed processing rules.
    - External service info → `docs/integrations.md` (if it exists)
    - Infrastructure / deploy info → `docs/deployment.md`
    - Code patterns / conventions → `docs/codestyle.md`
+   - Stakeholder context, business requirements, product decisions, team process,
+     external constraints not visible in code → `docs/project-context.md`
    - Decisions not yet implemented → `docs/rationale.md` with status "accepted (not yet implemented)"
    - Future plans / ideas → relevant doc under "Planned Changes" section
 
 4. **Report**: list each file processed, what knowledge was extracted, and where
    it was integrated. Do NOT delete raw files — the user manages their own raw_data.
+
+5. **Append to `docs/log.md`**:
+   `## [YYYY-MM-DD] ingest | <N> files — <brief summary of knowledge types extracted>`
 
 ---
 
@@ -387,10 +421,19 @@ Incremental documentation sync based on recent repository changes.
    - `data-model.md` if schema changed
    - `api.md` if endpoints changed
 
-4. **Flag new components**: if new top-level modules appeared, propose adding them:
+4. **Check for contradictions introduced by updates**: after updating docs, scan
+   the changed sections against cross-referenced docs. If a claim in an updated doc
+   conflicts with a claim elsewhere (e.g., token expiry changed in one doc but not
+   another), surface it:
+   *"Updated `auth/README.md` sets token TTL to 24h, but `api.md` still says 1h. Which is correct?"*
+
+5. **Flag new components**: if new top-level modules appeared, propose adding them:
    *"New module detected: <name>. Should I add it to tracked components?"*
 
-5. **Update AGENTS.md** with new commit SHA and changes summary.
+6. **Update AGENTS.md** with new commit SHA and changes summary.
+
+7. **Append to `docs/log.md`**:
+   `## [YYYY-MM-DD] update | Commits <from-SHA>..<to-SHA> — <N> docs updated, <M> contradictions flagged`
 
 ---
 
@@ -431,6 +474,80 @@ Show the health and coverage of the documentation.
    Last scan: 2025-06-01
    Coverage: 75%
    ```
+
+---
+
+## Command: `/lumen lint`
+
+Audit documentation quality. Where `/lumen status` measures *coverage* (what exists),
+lint measures *health* (what's accurate, consistent, and complete). Run periodically
+or after a burst of ingests/updates.
+
+Read `references/lint-guide.md` for detailed checks and resolution guidance.
+
+### Procedure
+
+1. **Read all docs** — `AGENTS.md` and everything in `docs/` except `raw_data/`.
+
+2. **Check for contradictions**: find claims in different docs that conflict with
+   each other. Common sources:
+   - Same config value documented differently (e.g., token TTL, port numbers)
+   - Two components claiming ownership of the same responsibility
+   - A decision in `rationale.md` contradicted by implementation notes elsewhere
+   - `project-context.md` requirements that conflict with architecture choices in `high-level-design.md`
+
+3. **Check for stale claims**: find content that newer docs have superseded. Look for:
+   - Sections marked `<!-- Ingested: YYYY-MM-DD -->` that reference now-changed systems
+   - Decisions with status `accepted (not yet implemented)` that appear to have been
+     implemented (cross-check against code if needed)
+   - Component docs that describe the old structure after a rename or refactor
+
+4. **Find orphan pages**: docs that exist but are not linked from `AGENTS.md` or
+   any other doc. These are invisible to navigation.
+
+5. **Find orphan concepts**: terms or component names mentioned in 3+ docs that have
+   no dedicated page. Candidate pages worth creating.
+
+6. **Find broken references**: `file:function()` pointers that point to files or
+   functions that no longer exist.
+
+7. **Suggest investigations**: based on gaps found, propose questions worth asking
+   or sources worth finding:
+   *"The auth flow is documented but the token refresh path has no sequence diagram.
+    Worth adding during the next scan?"*
+   *"Three docs mention `EventBus` but its source and ownership are unclear."*
+
+8. **Report** findings grouped by severity:
+   ```
+   🔆 Lumen Lint for <repo-name>
+
+   Contradictions (resolve these):
+     ⚠️  token TTL: auth/README.md says 24h, api.md says 1h
+     ⚠️  Request validation: both api-gateway and auth claim ownership
+
+   Stale claims (verify):
+     🕐 rationale.md: "switch to event-driven auth" marked not-yet-implemented — implemented in v2.3?
+     🕐 deployment.md: references old Jenkins pipeline, repo now uses GitHub Actions
+
+   Orphan pages (not linked anywhere):
+     📄 docs/experiments/old-approach.md
+
+   Orphan concepts (no dedicated page):
+     💡 "EventBus" — mentioned in 5 docs, no page
+     💡 "circuit breaker pattern" — mentioned in 3 docs, no page
+
+   Broken references:
+     ❌ auth/README.md: src/auth/legacy_handler.go (file deleted)
+
+   Suggestions:
+     🔍 Token refresh flow has no sequence diagram
+     🔍 project-context.md is empty — consider ingesting project requirements
+
+   Summary: 2 contradictions, 2 stale claims, 1 orphan page, 2 orphan concepts, 1 broken ref
+   ```
+
+9. **Append to `docs/log.md`**:
+   `## [YYYY-MM-DD] lint | <N> contradictions, <M> stale claims, <K> orphan concepts`
 
 ---
 
@@ -487,6 +604,7 @@ Natural language query against the documentation.
    - Deploy/infra questions → `deployment.md`
    - "Why" questions → `rationale.md`
    - Code style questions → `codestyle.md`
+   - Stakeholder, business, requirements, constraints questions → `project-context.md`
 
 3. **Read relevant files** and synthesize an answer. Use code references
    (`file:function()`) when pointing to implementation.
@@ -497,6 +615,18 @@ Natural language query against the documentation.
    into `docs/raw_data/` and run `/lumen ingest`."*
 
 5. **Cite sources**: reference which doc files the answer comes from.
+
+6. **Offer to file the answer**: if the answer involved non-trivial synthesis across
+   multiple docs — a comparison, a cross-cutting analysis, a flow reconstruction —
+   offer to save it as a new page:
+   *"This analysis synthesizes 3 docs. Worth saving as `docs/<suggested-name>.md`
+   so future sessions start with this already understood?"*
+   If the user agrees, write the page and add it to `AGENTS.md`'s Documentation Index.
+
+7. **Append to `docs/log.md`** *(only if the answer was filed as a new page in
+   step 6, to avoid log noise from ephemeral lookups)*:
+   `## [YYYY-MM-DD] query | "<question summary>" — filed as docs/X.md`
+   Trivial or read-only queries may be omitted from the log.
 
 ---
 
@@ -541,6 +671,7 @@ When docs already exist:
 - Scan checklists → `references/scan-guide.md` *(read during /lumen scan)*
 - Parallel orchestration → `references/scan-parallel.md` *(read during /lumen scan)*
 - Ingest processing rules → `references/ingest-guide.md` *(read during /lumen ingest)*
+- Lint checks and resolution → `references/lint-guide.md` *(read during /lumen lint)*
 - Rule file guide → `references/agents-template.md` *(read during /lumen rules)*
 - Rule content → `assets/lumen-rule.md` *(static file, copied by install script)*
 - Install script → `scripts/install-rules.sh` *(run during /lumen rules)*

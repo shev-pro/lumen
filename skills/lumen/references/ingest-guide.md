@@ -38,6 +38,10 @@ Meeting notes, call recordings (text), standup summaries, retro notes.
 - Technical constraints or requirements discovered → route to relevant doc
 - Architecture discussions → route to `docs/high-level-design.md`
 - API decisions → route to `docs/api.md` or `docs/<component>/api.md`
+- Stakeholder priorities, product direction, business rules, team process
+  → route to `docs/project-context.md`
+- Sprint goals, retrospective outcomes, team agreements → route to
+  `docs/project-context.md` under "Team & Process"
 
 **Ignore**: scheduling talk, off-topic chat, repeated context-setting.
 
@@ -48,8 +52,10 @@ Email threads, Slack exports, chat logs, discussion dumps.
 **Extract**:
 - Requirements or spec changes → route to `docs/data-model.md` or component README
 - Decisions communicated → route to `docs/rationale.md`
-- Stakeholder context ("the client wants...", "legal requires...") → route to
-  `docs/high-level-design.md` under Cross-Cutting Concerns or component README
+- Stakeholder context ("the client wants...", "legal requires...", "the product
+  team has decided...") → route to `docs/project-context.md`
+- External constraints ("we can't use X because of licensing", "we must support IE11
+  per contract") → route to `docs/project-context.md` under "Constraints"
 - Technical constraints ("the API only supports...", "we can't use X because...")
   → route to `docs/codestyle.md` or `docs/rationale.md`
 
@@ -94,15 +100,24 @@ raw_data paths. The docs are a distilled reference, not a document archive.
 When extracted knowledge could go to multiple places, use this priority:
 
 1. Is it a **decision with rationale**? → `docs/rationale.md` (ADR format)
-2. Is it about **a specific component's API**? → `docs/<component>/api.md`
-3. Is it about **a specific component's data**? → `docs/<component>/data-model.md`
-4. Is it about **a specific component** generally? → `docs/<component>/README.md`
-5. Is it about **an external service or integration**? → `docs/integrations.md` (if it exists)
-6. Is it about **global API surface**? → `docs/api.md`
-7. Is it about **data model / schema**? → `docs/data-model.md`
-8. Is it about **infrastructure/deploy**? → `docs/deployment.md`
-9. Is it about **code patterns/conventions**? → `docs/codestyle.md`
-10. Is it about **system architecture**? → `docs/high-level-design.md`
+2. Is it **stakeholder context, a business requirement, a product constraint, or
+   team/process knowledge not visible in code**? → `docs/project-context.md`
+3. Is it about **a specific component's API**? → `docs/<component>/api.md`
+4. Is it about **a specific component's data**? → `docs/<component>/data-model.md`
+5. Is it about **a specific component** generally? → `docs/<component>/README.md`
+6. Is it about **an external service or integration**? → `docs/integrations.md` (if it exists)
+7. Is it about **global API surface**? → `docs/api.md`
+8. Is it about **data model / schema**? → `docs/data-model.md`
+9. Is it about **infrastructure/deploy**? → `docs/deployment.md`
+10. Is it about **code patterns/conventions**? → `docs/codestyle.md`
+11. Is it about **system architecture**? → `docs/high-level-design.md`
+
+**Note on project-context.md vs rationale.md**: rationale captures *technical decisions*
+("we chose Postgres over MySQL because…"). project-context captures the *business and
+stakeholder layer* that surrounds those decisions ("the client requires GDPR compliance",
+"the product team prioritizes mobile-first", "legal flagged session token storage"). When
+a decision is driven by a business constraint, record the constraint in project-context.md
+and link to it from the rationale entry.
 
 ---
 
