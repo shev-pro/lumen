@@ -13,6 +13,12 @@ need to become productive quickly.
 **Code is the source of truth.** Docs point to it with file:function() references,
 never duplicate it. If a section would just restate the code, link to the file instead.
 
+**Symbolic over positional.** Prefer `file.go:Symbol()` or `file.go:TypeName` over
+`file.go:42`. Line numbers go stale silently after any edit above them — symbol
+names survive refactors and let `Ctrl+F` / IDE navigation work for free. Use a
+line number only when there is no stable symbolic anchor (mid-function constants,
+route registration blocks, regex literals, magic values).
+
 ### What to document
 
 - What each component does and why it exists
@@ -154,7 +160,7 @@ Use the Component README Template from `references/templates.md`.
    `src/auth/handler.go:HandleLogin()`.
 
 4. **Key Interfaces / Types**: main interfaces, structs, types that define the contract.
-   Point to source with line numbers.
+   Point to source by name (`file.go:TypeName`), not line number.
 
 5. **Flows**: Mermaid `sequenceDiagram` for at least 2 primary flows.
 

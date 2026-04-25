@@ -103,7 +103,9 @@ The 3–7 most important files for understanding this component.
 Use file:function() pointers — e.g. `src/auth/handler.go:HandleLogin()`.
 
 #### Key Interfaces / Types
-Main interfaces, structs, or types that define the contract. Point to source with line numbers.
+Main interfaces, structs, or types that define the contract. Point to source by
+name (`file.go:TypeName`), not line number — line numbers go stale silently
+after any edit above them.
 
 #### Flows
 Sequence diagrams for the primary flows using Mermaid. Document at least the

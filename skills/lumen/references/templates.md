@@ -279,8 +279,8 @@ graph TD
 
 <Main interfaces, structs, or types that define this component's contract. Point to source.>
 
-- `Handler` — HTTP handler interface → `src/component/handler.go:15`
-- `Service` — Business logic → `src/component/service.go:22`
+- `Handler` — HTTP handler interface → `src/component/handler.go:Handler`
+- `Service` — Business logic → `src/component/service.go:Service`
 
 ## Flows
 
